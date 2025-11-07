@@ -10,6 +10,7 @@ import SettingsModal from './components/SettingsModal';
 import HelpModal from './components/HelpModal';
 import MaskSelector from './components/MaskSelector';
 import { generatePythonScripts } from './services/scriptGenerator';
+import { runExtraction as runExtractionRequest, RunExtractionResponse } from './services/api';
 
 type Theme = 'light' | 'dark';
 
@@ -182,6 +183,40 @@ export default function App() {
 
   const pythonScripts = useMemo(() => generatePythonScripts(config, selectedSatellite, selectedMask), [config, selectedSatellite, selectedMask]);
 
+  const [runState, setRunState] = useState<{ status: 'idle' | 'running' | 'success' | 'error'; message: string }>(() => ({
+    status: 'idle',
+    message: '',
+  }));
+
+  useEffect(() => {
+    setRunState({ status: 'idle', message: '' });
+  }, [pythonScripts.fullScript]);
+
+  const handleRunExtraction = useCallback(async () => {
+    setRunState({ status: 'running', message: 'Starting extraction…' });
+    try {
+      const result: RunExtractionResponse = await runExtractionRequest(config);
+      if (result.status === 'success' && result.summary) {
+        const { images_found, export_method, collection } = result.summary;
+        const maskMessage = result.summary.mask_applied ? 'Mask applied.' : 'Mask not applied.';
+        setRunState({
+          status: 'success',
+          message: `Extraction prepared for ${collection}. ${images_found} image(s) filtered. Export method: ${export_method}. ${maskMessage}`,
+        });
+      } else {
+        setRunState({
+          status: 'error',
+          message: result.message || 'Failed to run extraction.',
+        });
+      }
+    } catch (error) {
+      setRunState({
+        status: 'error',
+        message: error instanceof Error ? error.message : 'Failed to run extraction.',
+      });
+    }
+  }, [config]);
+
   const InfoCard = ({ satellite }: { satellite: Satellite }) => (
     <div className="bg-white dark:bg-dark-surface p-4 rounded-lg shadow-md border border-gray-200 dark:border-dark-border">
       <h3 className="text-xl font-bold text-brand-dark dark:text-dark-text-primary">{satellite.name}</h3>
@@ -278,7 +313,7 @@ export default function App() {
 
           {/* Right Column: Code Output */}
           <div className="sticky top-24 z-5">
-            <CodeOutput scripts={pythonScripts} />
+            <CodeOutput scripts={pythonScripts} onRun={handleRunExtraction} runState={runState} />
           </div>
         </div>
       </main>

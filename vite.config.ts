@@ -8,6 +8,9 @@ export default defineConfig(({ mode }) => {
       server: {
         port: 3000,
         host: '0.0.0.0',
+        proxy: {
+          '/api': env.VITE_API_PROXY || 'http://localhost:5000',
+        },
       },
       plugins: [react()],
       define: {

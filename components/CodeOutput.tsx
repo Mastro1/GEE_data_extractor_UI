@@ -14,14 +14,21 @@ const CheckIcon = () => (
     </svg>
 );
 
+interface RunState {
+  status: 'idle' | 'running' | 'success' | 'error';
+  message: string;
+}
+
 interface CodeOutputProps {
   scripts: {
     fullScript: string;
     classCode: string;
   };
+  onRun: () => Promise<void>;
+  runState: RunState;
 }
 
-export default function CodeOutput({ scripts }: CodeOutputProps) {
+export default function CodeOutput({ scripts, onRun, runState }: CodeOutputProps) {
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState<CodeView>('script');
 
@@ -65,17 +72,41 @@ export default function CodeOutput({ scripts }: CodeOutputProps) {
           <TabButton view="script">Run Script</TabButton>
           <TabButton view="class">Class Code</TabButton>
         </div>
-        <button
-          onClick={copyToClipboard}
-          className={`px-3 py-1.5 text-sm font-medium rounded-md flex items-center gap-2 transition-colors duration-200 ${copied ? 'bg-green-600 text-white' : 'bg-gray-600 text-gray-300 hover:bg-gray-500'}`}
-        >
-          {copied ? <CheckIcon /> : <CopyIcon />}
-          {copied ? 'Copied!' : 'Copy'}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={async () => {
+              if (runState.status === 'running') return;
+              await onRun();
+            }}
+            className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors duration-200 ${
+              runState.status === 'running'
+                ? 'bg-blue-500 text-white opacity-70 cursor-not-allowed'
+                : 'bg-brand-primary text-white hover:bg-brand-primary/80'
+            }`}
+          >
+            {runState.status === 'running' ? 'Running…' : 'Run Extraction'}
+          </button>
+          <button
+            onClick={copyToClipboard}
+            className={`px-3 py-1.5 text-sm font-medium rounded-md flex items-center gap-2 transition-colors duration-200 ${copied ? 'bg-green-600 text-white' : 'bg-gray-600 text-gray-300 hover:bg-gray-500'}`}
+          >
+            {copied ? <CheckIcon /> : <CopyIcon />}
+            {copied ? 'Copied!' : 'Copy'}
+          </button>
+        </div>
       </div>
       <pre className="p-4 text-sm text-white overflow-x-auto max-h-[70vh]">
         <code className="language-python">{contentToDisplay}</code>
       </pre>
+      {runState.status !== 'idle' && (
+        <div
+          className={`px-4 py-3 text-sm border-t border-gray-700 ${
+            runState.status === 'error' ? 'text-red-300' : 'text-green-300'
+          }`}
+        >
+          {runState.message}
+        </div>
+      )}
     </div>
   );
 }
