@@ -14,14 +14,28 @@ const CheckIcon = () => (
     </svg>
 );
 
+interface RunState {
+  status: 'idle' | 'running' | 'success' | 'error';
+  message: string;
+  artifacts?: {
+    config_path: string;
+    runner_path: string;
+    class_path: string;
+    output_path: string;
+    log_path: string;
+  };
+}
+
 interface CodeOutputProps {
   scripts: {
     fullScript: string;
     classCode: string;
   };
+  onRun: () => Promise<void>;
+  runState: RunState;
 }
 
-export default function CodeOutput({ scripts }: CodeOutputProps) {
+export default function CodeOutput({ scripts, onRun, runState }: CodeOutputProps) {
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState<CodeView>('script');
 
@@ -65,17 +79,59 @@ export default function CodeOutput({ scripts }: CodeOutputProps) {
           <TabButton view="script">Run Script</TabButton>
           <TabButton view="class">Class Code</TabButton>
         </div>
-        <button
-          onClick={copyToClipboard}
-          className={`px-3 py-1.5 text-sm font-medium rounded-md flex items-center gap-2 transition-colors duration-200 ${copied ? 'bg-green-600 text-white' : 'bg-gray-600 text-gray-300 hover:bg-gray-500'}`}
-        >
-          {copied ? <CheckIcon /> : <CopyIcon />}
-          {copied ? 'Copied!' : 'Copy'}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={async () => {
+              if (runState.status === 'running') return;
+              await onRun();
+            }}
+            className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors duration-200 ${
+              runState.status === 'running'
+                ? 'bg-blue-500 text-white opacity-70 cursor-not-allowed'
+                : 'bg-brand-primary text-white hover:bg-brand-primary/80'
+            }`}
+          >
+            {runState.status === 'running' ? 'Running…' : 'Run Extraction'}
+          </button>
+          <button
+            onClick={copyToClipboard}
+            className={`px-3 py-1.5 text-sm font-medium rounded-md flex items-center gap-2 transition-colors duration-200 ${copied ? 'bg-green-600 text-white' : 'bg-gray-600 text-gray-300 hover:bg-gray-500'}`}
+          >
+            {copied ? <CheckIcon /> : <CopyIcon />}
+            {copied ? 'Copied!' : 'Copy'}
+          </button>
+        </div>
       </div>
       <pre className="p-4 text-sm text-white overflow-x-auto max-h-[70vh]">
         <code className="language-python">{contentToDisplay}</code>
       </pre>
+      {runState.status !== 'idle' && (
+        <div
+          className={`px-4 py-3 text-sm border-t border-gray-700 ${
+            runState.status === 'error' ? 'text-red-300' : 'text-green-300'
+          }`}
+        >
+          <p>{runState.message}</p>
+          {runState.artifacts && runState.status === 'success' && (
+            <div className="mt-2 text-xs text-gray-300 space-y-1">
+              <p className="font-semibold text-gray-200">Generated files:</p>
+              <ul className="space-y-1">
+                <li><span className="text-gray-400">Runner:</span> <code className="break-all">{runState.artifacts.runner_path}</code></li>
+                <li><span className="text-gray-400">Classes:</span> <code className="break-all">{runState.artifacts.class_path}</code></li>
+                <li><span className="text-gray-400">Config:</span> <code className="break-all">{runState.artifacts.config_path}</code></li>
+                <li><span className="text-gray-400">Output:</span> <code className="break-all">{runState.artifacts.output_path}</code></li>
+                <li><span className="text-gray-400">Log:</span> <code className="break-all">{runState.artifacts.log_path}</code></li>
+              </ul>
+            </div>
+          )}
+          {runState.artifacts && runState.status === 'error' && (
+            <div className="mt-2 text-xs text-red-200">
+              <p>Review the log file for more details:</p>
+              <code className="break-all">{runState.artifacts.log_path}</code>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
