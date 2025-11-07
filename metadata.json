@@ -1,0 +1,5 @@
+{
+  "name": "GEE Data Extractor UI",
+  "description": "A user-friendly interface to configure and generate Python scripts for extracting satellite data from Google Earth Engine. Select a satellite, define your area of interest, time range, and desired bands to get a ready-to-use script.",
+  "requestFramePermissions": []
+}

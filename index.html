@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GEE Data Extractor UI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              'brand-primary': '#1a73e8',
+              'brand-secondary': '#f1f3f4',
+              'brand-dark': '#202124',
+              'brand-light': '#ffffff',
+              'brand-text': '#5f6368',
+              'brand-text-dark': '#e8eaed',
+              'dark-bg': '#202124',
+              'dark-surface': '#303134',
+              'dark-border': '#5f6368',
+              'dark-text-primary': '#e8eaed',
+              'dark-text-secondary': '#bdc1c6',
+            }
+          }
+        }
+      }
+    </script>
+  <script type="importmap">
+{
+  "imports": {
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/"
+  }
+}
+</script>
+</head>
+  <body class="bg-brand-secondary dark:bg-dark-bg">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
